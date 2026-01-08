@@ -18,31 +18,25 @@ function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await getProfile();
-        setUser(res.data.user);
-        setEmailKey(res.data.user.emailKey || "");
-        setName(res.data.user.name || "");
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
-
-  const handleSaveEmailKey = async () => {
+  // ================= FETCH PROFILE =================
+  const fetchProfile = async () => {
     try {
-      await updateEmailKey(emailKey);
-      alert("Email key saved");
-    } catch {
-      alert("Failed to save email key");
+      const res = await getProfile();
+      setUser(res.data.user);
+      setEmailKey(res.data.user.emailKey || "");
+      setName(res.data.user.name || "");
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  // ================= UPDATE NAME =================
   const handleSaveName = async () => {
     if (!name) {
       alert("Name cannot be empty");
@@ -57,19 +51,38 @@ function Profile() {
     }
   };
 
+  // ================= UPDATE EMAIL KEY =================
+  const handleSaveEmailKey = async () => {
+    try {
+      await updateEmailKey(emailKey);
+      alert("Email key saved");
+    } catch {
+      alert("Failed to save email key");
+    }
+  };
+
+  // ================= UPLOAD RESUME =================
   const handleSaveResume = async () => {
+    if (!resume) return;
     try {
       await uploadResume(resume);
+      await fetchProfile(); // 🔥 refresh profile
+      
+      setResume(null);
       alert("Resume uploaded");
     } catch {
       alert("Resume upload failed");
     }
   };
 
+  // ================= UPLOAD PHOTO =================
   const handlePhotoChange = async (file) => {
-    setPhoto(file);
+    if (!file) return;
+    setPhoto(file); // local preview
     try {
       await uploadPhoto(file);
+      await fetchProfile(); // 🔥 refresh profile
+      setPhoto(null);
     } catch {
       alert("Photo upload failed");
     }
@@ -85,7 +98,7 @@ function Profile() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
-      {/* PROFILE CARD */}
+      {/* ================= PROFILE CARD ================= */}
       <div className="bg-white border rounded-2xl p-6 flex gap-6 items-center shadow-sm">
         <div className="w-24 h-24 rounded-full border overflow-hidden flex items-center justify-center">
           {photo ? (
@@ -96,7 +109,7 @@ function Profile() {
             />
           ) : user?.profilePhoto ? (
             <img
-              src={`http://localhost:5000/${user.profilePhoto}`}
+              src={user.profilePhoto}   // ✅ CLOUDINARY URL DIRECT
               alt="profile"
               className="w-full h-full object-cover"
             />
@@ -135,7 +148,7 @@ function Profile() {
         </div>
       </div>
 
-      {/* EMAIL KEY */}
+      {/* ================= EMAIL KEY ================= */}
       <div className="bg-white border rounded-2xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold mb-1">
           Email Credentials
@@ -159,23 +172,9 @@ function Profile() {
             Save
           </button>
         </div>
-
-        <div className="mt-4 text-right">
-          <button
-            className="text-sm text-red-500 underline"
-            onClick={() =>
-              window.open(
-                "https://www.youtube.com/watch?v=m8Ur2SoVKEs",
-                "_blank"
-              )
-            }
-          >
-            How to generate email passkey?
-          </button>
-        </div>
       </div>
 
-      {/* RESUME */}
+      {/* ================= RESUME ================= */}
       <div className="bg-white border rounded-2xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold mb-4">Resume</h3>
 
@@ -184,9 +183,14 @@ function Profile() {
             Selected: <b>{resume.name}</b>
           </p>
         ) : user?.resume ? (
-          <p className="text-sm text-green-600 mb-2">
-            Resume uploaded
-          </p>
+          <a
+            href={user.resume}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm text-blue-600 underline mb-2 inline-block"
+          >
+            View Resume
+          </a>
         ) : (
           <p className="text-sm text-gray-500 mb-2">
             No resume uploaded
@@ -215,7 +219,7 @@ function Profile() {
         </div>
       </div>
 
-      {/* CTA */}
+      {/* ================= CTA ================= */}
       <div className="text-right">
         <button
           onClick={() => navigate("/apply")}

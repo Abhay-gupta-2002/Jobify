@@ -36,12 +36,13 @@ router.post("/apply", authMiddleware, async (req, res) => {
 
     const attachments = [];
 
-    if (user.resume) {
-      attachments.push({
-        filename: path.basename(user.resume),
-        path: path.join(__dirname, "..", user.resume.replace(/\\/g, "/")),
-      });
-    }
+   if (user.resume) {
+  attachments.push({
+    filename: "resume.pdf",
+    path: user.resume, // 👈 direct Cloudinary URL
+  });
+}
+
 
     await transporter.sendMail({
       from: user.email,
