@@ -9,15 +9,12 @@ logs/
 *.log
 npm-debug.log*
 
-# Uploads / files
+# Uploads / temp files
 uploads/
 temp/
+*.pdf
 
 # Editor / OS
 .vscode/
 .idea/
 .DS_Store
-uploads/
-*.pdf
-
-resume.pdf

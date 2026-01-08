@@ -2,61 +2,39 @@ const express = require("express");
 const router = express.Router();
 const fs = require("fs");
 
-// JWT middleware
 const authMiddleware = require("../middleware/auth.middleware");
-
-// multer upload middleware (TEMP FILE)
 const upload = require("../middleware/upload.middleware");
-
-// Cloudinary
 const cloudinary = require("../config/cloudinary");
-
-// User model
 const User = require("../models/User");
 
-/* ======================================================
-   GET PROFILE
-====================================================== */
+/* ================= GET PROFILE ================= */
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     res.json({ success: true, user });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-/* ======================================================
-   UPDATE NAME / EMAIL KEY
-====================================================== */
+/* ================= UPDATE PROFILE ================= */
 router.put("/profile", authMiddleware, async (req, res) => {
   try {
-    const { emailKey, name } = req.body;
-
-    const updateData = {};
-    if (emailKey !== undefined) updateData.emailKey = emailKey;
-    if (name !== undefined) updateData.name = name;
+    const { name, emailKey } = req.body;
 
     const user = await User.findByIdAndUpdate(
       req.userId,
-      updateData,
+      { name, emailKey },
       { new: true }
     ).select("-password");
 
     res.json({ success: true, user });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-/* ======================================================
-   UPLOAD RESUME (FIXED)
-====================================================== */
+/* ================= UPLOAD RESUME ================= */
 router.post(
   "/resume",
   authMiddleware,
@@ -67,64 +45,59 @@ router.post(
         return res.status(400).json({ message: "No resume uploaded" });
       }
 
-      // 🔥 upload to cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "jobify/resume",
-        resource_type: "auto",
-      });
+      const result = await cloudinary.uploader.upload_stream(
+        {
+          folder: "jobify/resume",
+          resource_type: "raw",
+        },
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ error: error.message });
+          }
 
-      // 🔥 save REAL cloudinary URL
-      const user = await User.findByIdAndUpdate(
-        req.userId,
-        { resume: result.secure_url },
-        { new: true }
-      ).select("-password");
+          await User.findByIdAndUpdate(req.userId, {
+            resume: result.secure_url, // ✅ STORE URL
+          });
 
-      fs.unlinkSync(req.file.path); // delete temp file
+          res.json({
+            success: true,
+            resume: result.secure_url,
+          });
+        }
+      );
 
-      res.json({
-        success: true,
-        resume: user.resume,
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+      result.end(req.file.buffer);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   }
 );
 
-/* ======================================================
-   UPLOAD PROFILE PHOTO (FIXED)
-====================================================== */
+/* ================= UPLOAD PHOTO ================= */
 router.post(
   "/photo",
   authMiddleware,
   upload.single("photo"),
   async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No photo uploaded" });
-      }
+      const result = await cloudinary.uploader.upload_stream(
+        { folder: "jobify/profile" },
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ error: error.message });
+          }
 
-      // 🔥 upload to cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "jobify/profile",
-      });
+          await User.findByIdAndUpdate(req.userId, {
+            profilePhoto: result.secure_url,
+          });
 
-      // 🔥 save REAL cloudinary URL
-      const user = await User.findByIdAndUpdate(
-        req.userId,
-        { profilePhoto: result.secure_url },
-        { new: true }
-      ).select("-password");
+          res.json({ success: true, photo: result.secure_url });
+        }
+      );
 
-      fs.unlinkSync(req.file.path); // delete temp file
-
-      res.json({
-        success: true,
-        profilePhoto: user.profilePhoto,
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+      result.end(req.file.buffer);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   }
 );

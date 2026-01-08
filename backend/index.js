@@ -38,7 +38,7 @@ app.post("/generate-email", authMiddleware, async (req, res) => {
     const emailBody = await generateEmail({ jobText, company });
 
     // ✅ name backend se append
-    const finalEmail = `${emailBody}\n${user.name}`;
+    const finalEmail =emailBody;
 
     res.json({
       success: true,
