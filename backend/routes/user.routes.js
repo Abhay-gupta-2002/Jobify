@@ -1,10 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const fs = require("fs");
+const path = require("path");
 
 const authMiddleware = require("../middleware/auth.middleware");
 const upload = require("../middleware/upload.middleware");
-const cloudinary = require("../config/cloudinary");
 const User = require("../models/User");
 
 /* ================= GET PROFILE ================= */
@@ -35,71 +34,42 @@ router.put("/profile", authMiddleware, async (req, res) => {
 });
 
 /* ================= UPLOAD RESUME ================= */
-router.post(
-  "/resume",
-  authMiddleware,
-  upload.single("resume"),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No resume uploaded" });
-      }
+const cloudinary = require("../config/cloudinary");
 
-      const result = await cloudinary.uploader.upload_stream(
-        {
-          folder: "jobify/resume",
-          resource_type: "raw",
-        },
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ error: error.message });
-          }
+router.post("/resume", authMiddleware, upload.single("resume"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No resume uploaded" });
 
-          await User.findByIdAndUpdate(req.userId, {
-            resume: result.secure_url, // ✅ STORE URL
-          });
+  cloudinary.uploader.upload_stream(
+    { folder: "jobify/resume", resource_type: "raw" },
+    async (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-          res.json({
-            success: true,
-            resume: result.secure_url,
-          });
-        }
-      );
+      await User.findByIdAndUpdate(req.userId, {
+        resume: result.secure_url,
+      });
 
-      result.end(req.file.buffer);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.json({ success: true, resume: result.secure_url });
     }
-  }
-);
+  ).end(req.file.buffer);
+});
+
 
 /* ================= UPLOAD PHOTO ================= */
-router.post(
-  "/photo",
-  authMiddleware,
-  upload.single("photo"),
-  async (req, res) => {
-    try {
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "jobify/profile" },
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ error: error.message });
-          }
+router.post("/photo", authMiddleware, upload.single("photo"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No photo uploaded" });
 
-          await User.findByIdAndUpdate(req.userId, {
-            profilePhoto: result.secure_url,
-          });
+  cloudinary.uploader.upload_stream(
+    { folder: "jobify/profile" },
+    async (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-          res.json({ success: true, photo: result.secure_url });
-        }
-      );
+      await User.findByIdAndUpdate(req.userId, {
+        profilePhoto: result.secure_url,
+      });
 
-      result.end(req.file.buffer);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.json({ success: true, photo: result.secure_url });
     }
-  }
-);
+  ).end(req.file.buffer);
+});
 
 module.exports = router;
