@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const nodemailer = require("nodemailer");
+const path = require("path");
+const fs = require("fs");
+const os = require("os");
+const axios = require("axios");
 
 const authMiddleware = require("../middleware/auth.middleware");
 const User = require("../models/User");
@@ -31,22 +35,33 @@ router.post("/apply", authMiddleware, async (req, res) => {
         pass: user.emailKey,
       },
     });
-const axios = require("axios");
 
-const attachments = [];
+    const attachments = [];
+    let tempPath = null;
 
-if (user.resume) {
-  const response = await axios.get(user.resume, {
-    responseType: "arraybuffer",
-  });
+    // 🔥 FIXED RESUME ATTACH
+    if (user.resume) {
+      tempPath = path.join(os.tmpdir(), "resume.pdf");
 
-  attachments.push({
-    filename: "resume.pdf",
-    content: Buffer.from(response.data),
-    contentType: "application/pdf",
-  });
-}
+      const response = await axios({
+        url: user.resume,
+        method: "GET",
+        responseType: "stream",
+      });
 
+      const writer = fs.createWriteStream(tempPath);
+      response.data.pipe(writer);
+
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+      });
+
+      attachments.push({
+        filename: "resume.pdf",
+        path: tempPath,
+      });
+    }
 
     await transporter.sendMail({
       from: user.email,
@@ -55,6 +70,8 @@ if (user.resume) {
       text: emailText,
       attachments,
     });
+
+    if (tempPath) fs.unlinkSync(tempPath);
 
     user.applications.push({
       company,

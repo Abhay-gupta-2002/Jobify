@@ -1,5 +1,5 @@
 require("dotenv").config();
-const PORT = process.env.PORT || 5000;
+
 const connectDB = require("./config/db");
 connectDB();
 
@@ -13,10 +13,7 @@ const applicationRoutes = require("./routes/application.routes");
 const { generateEmail } = require("./services/ai.service");
 
 const app = express();
-app.use(cors({
-  origin: "*",
-}));
-
+app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -56,7 +53,7 @@ app.post("/generate-email", authMiddleware, async (req, res) => {
 app.get("/", (req, res) => {
   res.send("backend running");
 });
-app.listen(PORT, () => {
-  console.log("server running on port", PORT);
-});
 
+app.listen(5000, () => {
+  console.log("server running on port 5000");
+});
