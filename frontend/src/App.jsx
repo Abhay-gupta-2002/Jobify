@@ -15,24 +15,22 @@ import Profile from "./pages/Profile";
 function App() {
   const location = useLocation();
   const hideLayout =
-  location.pathname === "/" ||
-  location.pathname.startsWith("/forgot-password") ||
-  location.pathname.startsWith("/reset-password");
-
+    location.pathname === "/" ||
+    location.pathname.startsWith("/forgot-password") ||
+    location.pathname.startsWith("/reset-password");
 
   return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-slate-100">
+
         {!hideLayout && <Header />}
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 pt-20 pb-16 px-6 bg-white">
+        <main className="flex-1 pt-24 pb-20 px-6 max-w-7xl mx-auto">
           <Routes>
-            {/* PUBLIC */}
             <Route path="/" element={<AuthPage />} />
-             <Route path="/forgot-password" element={<ForgotPassword />} />
-  <Route path="/reset-password/:token" element={<ResetPassword />} />
-            {/* PROTECTED */}
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+
             <Route
               path="/home"
               element={

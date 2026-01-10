@@ -13,44 +13,35 @@ function Home() {
       try {
         const res = await getApplications();
         setEmails(res.data.applications);
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setLoading(false);
-      }
+      } catch {}
+      setLoading(false);
     };
     fetchData();
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+    <div className="max-w-6xl mx-auto py-12">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Recent Applications
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            Applications
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Track and manage your job applications
+          <p className="text-sm text-slate-400 mt-1">
+            Track your job applications
           </p>
         </div>
 
         <button
           onClick={() => navigate("/apply")}
-          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
+          className="bg-white text-black px-6 py-3 rounded-xl hover:bg-slate-200 transition"
         >
           Apply Now
         </button>
       </div>
 
-      {/* CONTENT */}
-      <div className="bg-white border rounded-2xl shadow-sm p-6">
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
         {loading ? (
-          <p className="text-gray-500">Loading applications...</p>
-        ) : emails.length === 0 ? (
-          <p className="text-gray-400 text-sm">
-            No applications yet. Start applying now.
-          </p>
+          <p className="text-slate-400">Loading...</p>
         ) : (
           <EmailList emails={emails} />
         )}

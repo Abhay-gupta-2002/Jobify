@@ -30,18 +30,21 @@ function Signin({ switchToSignup }) {
   };
 
   return (
-    <div className="w-full max-w-md bg-white border rounded-2xl p-8 shadow-lg">
-      <h2 className="text-3xl font-bold text-center text-gray-900 mb-2">
+    <div className="w-full max-w-md bg-black/70 backdrop-blur border border-white/10
+    rounded-3xl p-10 shadow-2xl">
+      <h2 className="text-3xl font-semibold tracking-tight text-white text-center mb-2">
         Welcome Back
       </h2>
-      <p className="text-sm text-gray-500 text-center mb-6">
+      <p className="text-sm text-slate-400 text-center mb-6">
         Login to continue applying for jobs
       </p>
 
       <input
         type="email"
         placeholder="Email address"
-        className="w-full mb-4 rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="w-full mb-4 rounded-xl border border-white/10 bg-white/5
+        px-4 py-3 text-white placeholder-slate-400
+        focus:outline-none focus:ring-2 focus:ring-white/20"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
@@ -49,23 +52,24 @@ function Signin({ switchToSignup }) {
       <input
         type="password"
         placeholder="Password"
-        className="w-full mb-3 rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="w-full mb-3 rounded-xl border border-white/10 bg-white/5
+        px-4 py-3 text-white placeholder-slate-400
+        focus:outline-none focus:ring-2 focus:ring-white/20"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      {/* LINKS */}
       <div className="flex justify-between text-sm mb-6">
         <button
           onClick={() => navigate("/forgot-password")}
-          className="text-red-500 hover:underline"
+          className="text-slate-400 hover:text-white"
         >
           Forgot password?
         </button>
 
         <button
           onClick={switchToSignup}
-          className="text-blue-600 hover:underline"
+          className="text-slate-400 hover:text-white"
         >
           Create account
         </button>
@@ -74,8 +78,8 @@ function Signin({ switchToSignup }) {
       <button
         onClick={handleLogin}
         disabled={loading}
-        className="w-full rounded-lg bg-blue-600 py-3 text-white font-medium
-                   hover:bg-blue-700 transition disabled:opacity-60"
+        className="w-full rounded-xl bg-white text-black py-3 font-medium
+        hover:bg-slate-200 transition-all active:scale-[0.98] disabled:opacity-60"
       >
         {loading ? "Signing in..." : "Sign In"}
       </button>

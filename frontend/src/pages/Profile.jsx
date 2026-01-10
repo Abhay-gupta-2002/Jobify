@@ -38,13 +38,10 @@ function Profile() {
 
   // ================= UPDATE NAME =================
   const handleSaveName = async () => {
-    if (!name) {
-      alert("Name cannot be empty");
-      return;
-    }
+    if (!name) return alert("Name cannot be empty");
     try {
-      const res = await updateName(name);
-      setUser(res.data.user);
+      await updateName(name);
+      await fetchProfile();
       alert("Name updated");
     } catch {
       alert("Failed to update name");
@@ -66,8 +63,7 @@ function Profile() {
     if (!resume) return;
     try {
       await uploadResume(resume);
-      await fetchProfile(); // 🔥 refresh profile
-      
+      await fetchProfile();
       setResume(null);
       alert("Resume uploaded");
     } catch {
@@ -76,13 +72,13 @@ function Profile() {
   };
 
   // ================= UPLOAD PHOTO =================
-  const handlePhotoChange = async (file) => {
-    if (!file) return;
-    setPhoto(file); // local preview
+  const handleSavePhoto = async () => {
+    if (!photo) return;
     try {
-      await uploadPhoto(file);
-      await fetchProfile(); // 🔥 refresh profile
+      await uploadPhoto(photo);
+      await fetchProfile();
       setPhoto(null);
+      alert("Photo updated");
     } catch {
       alert("Photo upload failed");
     }
@@ -90,84 +86,91 @@ function Profile() {
 
   if (loading) {
     return (
-      <p className="text-center text-gray-500 mt-20">
+      <p className="text-center text-slate-400 mt-20">
         Loading profile...
       </p>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
+    <div className="max-w-5xl mx-auto py-12 space-y-10">
+
       {/* ================= PROFILE CARD ================= */}
-      <div className="bg-white border rounded-2xl p-6 flex gap-6 items-center shadow-sm">
-        <div className="w-24 h-24 rounded-full border overflow-hidden flex items-center justify-center">
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex gap-6 items-center">
+        <div className="w-24 h-24 rounded-full border border-white/10 overflow-hidden">
           {photo ? (
             <img
               src={URL.createObjectURL(photo)}
-              alt="profile"
               className="w-full h-full object-cover"
             />
           ) : user?.profilePhoto ? (
             <img
-              src={user.profilePhoto}   // ✅ CLOUDINARY URL DIRECT
-              alt="profile"
+              src={user.profilePhoto}
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-gray-400 text-sm">Photo</span>
+            <div className="w-full h-full flex items-center justify-center text-slate-500">
+              Photo
+            </div>
           )}
         </div>
 
-        <div className="flex-1 space-y-2">
-          <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex-1 space-y-3">
+          <div className="flex flex-wrap gap-3 items-center">
             <input
-              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="border rounded-md px-3 py-1.5 text-sm"
+              className="rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white"
             />
             <button
               onClick={handleSaveName}
-              className="bg-black text-white px-4 py-1.5 rounded-md text-sm hover:bg-gray-800"
+              className="bg-white text-black px-4 py-2 rounded-xl"
             >
               Save
             </button>
           </div>
 
-          <p className="text-sm text-gray-500">{user?.email}</p>
+          <p className="text-sm text-slate-400">{user.email}</p>
 
-          <label className="text-sm text-blue-600 underline cursor-pointer">
-            Change Photo
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png"
-              onChange={(e) => handlePhotoChange(e.target.files[0])}
-              className="hidden"
-            />
-          </label>
+          <div className="flex gap-4 text-sm">
+            <label className="text-blue-400 underline cursor-pointer">
+              Change Photo
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png"
+                onChange={(e) => setPhoto(e.target.files[0])}
+                className="hidden"
+              />
+            </label>
+
+            {photo && (
+              <button
+                onClick={handleSavePhoto}
+                className="bg-white text-black px-3 py-1.5 rounded-lg"
+              >
+                Save Photo
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* ================= EMAIL KEY ================= */}
-      <div className="bg-white border rounded-2xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-1">
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+        <h3 className="text-lg font-semibold text-white mb-4">
           Email Credentials
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
-          Used to send emails on your behalf
-        </p>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex gap-4">
           <input
             type="password"
             value={emailKey}
             onChange={(e) => setEmailKey(e.target.value)}
-            placeholder="Enter email app password"
-            className="flex-1 border rounded-md px-3 py-2"
+            className="flex-1 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white"
           />
           <button
             onClick={handleSaveEmailKey}
-            className="bg-black text-white px-6 rounded-md hover:bg-gray-800"
+            className="bg-white text-black px-6 rounded-xl"
           >
             Save
           </button>
@@ -175,11 +178,13 @@ function Profile() {
       </div>
 
       {/* ================= RESUME ================= */}
-      <div className="bg-white border rounded-2xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Resume</h3>
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+        <h3 className="text-lg font-semibold text-white mb-4">
+          Resume
+        </h3>
 
         {resume ? (
-          <p className="text-sm text-gray-700 mb-2">
+          <p className="text-sm text-slate-300 mb-2">
             Selected: <b>{resume.name}</b>
           </p>
         ) : user?.resume ? (
@@ -187,18 +192,18 @@ function Profile() {
             href={user.resume}
             target="_blank"
             rel="noreferrer"
-            className="text-sm text-blue-600 underline mb-2 inline-block"
+            className="text-sm text-blue-400 underline mb-2 inline-block"
           >
             View Resume
           </a>
         ) : (
-          <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm text-slate-400 mb-2">
             No resume uploaded
           </p>
         )}
 
         <div className="flex flex-wrap gap-4 items-center">
-          <label className="text-sm text-blue-600 underline cursor-pointer">
+          <label className="text-blue-400 underline cursor-pointer text-sm">
             Upload Resume
             <input
               type="file"
@@ -211,7 +216,7 @@ function Profile() {
           {resume && (
             <button
               onClick={handleSaveResume}
-              className="bg-black text-white px-4 py-1.5 rounded-md text-sm hover:bg-gray-800"
+              className="bg-white text-black px-4 py-2 rounded-xl"
             >
               Save Resume
             </button>
@@ -223,7 +228,7 @@ function Profile() {
       <div className="text-right">
         <button
           onClick={() => navigate("/apply")}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+          className="bg-white text-black px-6 py-3 rounded-xl hover:bg-slate-200 transition"
         >
           Apply Now
         </button>

@@ -15,9 +15,7 @@ function Apply() {
       try {
         const res = await api.get("/api/user/profile");
         setUserName(res.data.user.name);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch {}
     };
     fetchUserName();
   }, []);
@@ -27,7 +25,6 @@ function Apply() {
       alert("Enter company name and job description");
       return;
     }
-
     setGenerating(true);
     try {
       const res = await api.post("/generate-email", { jobText, company });
@@ -44,7 +41,6 @@ function Apply() {
       alert("Fill all fields");
       return;
     }
-
     setLoading(true);
     try {
       await api.post("/api/application/apply", {
@@ -65,20 +61,23 @@ function Apply() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pt-6 px-4">
-      <div className="bg-white border rounded-xl p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold mb-1">Apply for a Job</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          Generate and send a professional application email
+    <div className="max-w-5xl mx-auto pt-10">
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 shadow-xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-white mb-1">
+          Apply for a Job
+        </h1>
+        <p className="text-sm text-slate-400 mb-8">
+          Generate and send professional job emails
         </p>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <input
             type="text"
             placeholder="Company Name"
             value={company}
             onChange={(e) => setCompany(e.target.value)}
-            className="w-full border rounded-md px-4 py-2"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3
+            text-white placeholder-slate-400 focus:ring-2 focus:ring-white/20 outline-none"
           />
 
           <input
@@ -86,32 +85,37 @@ function Apply() {
             placeholder="Recruiter Email"
             value={toEmail}
             onChange={(e) => setToEmail(e.target.value)}
-            className="w-full border rounded-md px-4 py-2"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3
+            text-white placeholder-slate-400 focus:ring-2 focus:ring-white/20 outline-none"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <textarea
               rows="10"
-              placeholder="Paste job description here..."
+              placeholder="Paste job description..."
               value={jobText}
               onChange={(e) => setJobText(e.target.value)}
-              className="border rounded-md p-3 resize-none"
+              className="rounded-xl border border-white/10 bg-white/5 p-4
+              text-white placeholder-slate-400 resize-none focus:ring-2 focus:ring-white/20 outline-none"
             />
+
             <textarea
               rows="10"
-              placeholder="Generated email will appear here..."
+              placeholder="Generated email..."
               value={emailText}
               onChange={(e) => setEmailText(e.target.value)}
-              className="border rounded-md p-3 resize-none bg-gray-50"
+              className="rounded-xl border border-white/10 bg-black/40 p-4
+              text-white placeholder-slate-400 resize-none outline-none"
             />
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:justify-between mt-6">
+        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between mt-8">
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-5 py-2 border rounded-md hover:bg-gray-50 transition disabled:opacity-60"
+            className="px-6 py-3 rounded-xl border border-white/10
+            hover:bg-white/10 transition disabled:opacity-60"
           >
             {generating ? "Generating..." : "Generate Email"}
           </button>
@@ -119,7 +123,8 @@ function Apply() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition disabled:opacity-60"
+            className="bg-white text-black px-6 py-3 rounded-xl
+            hover:bg-slate-200 transition disabled:opacity-60"
           >
             {loading ? "Sending..." : "Send Application"}
           </button>

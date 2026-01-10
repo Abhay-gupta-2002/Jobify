@@ -7,25 +7,21 @@ function AuthPage() {
   const [isSignup, setIsSignup] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* LEFT IMAGE */}
-      <div className="hidden md:flex w-1/2 items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-900 via-slate-950 to-black">
+      <div className="hidden md:flex w-1/2 items-center justify-center">
         <img
           src={heroImage}
           alt="Job apply"
-          className="max-w-[85%] max-h-[85%] object-contain"
+          className="max-w-[80%] opacity-90"
         />
       </div>
 
-      {/* RIGHT FORM */}
-      <div className="w-full md:w-1/2 flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-sm">
-          {isSignup ? (
-            <Signup switchToSignin={() => setIsSignup(false)} />
-          ) : (
-            <Signin switchToSignup={() => setIsSignup(true)} />
-          )}
-        </div>
+      <div className="w-full md:w-1/2 flex items-center justify-center px-6">
+        {isSignup ? (
+          <Signup switchToSignin={() => setIsSignup(false)} />
+        ) : (
+          <Signin switchToSignup={() => setIsSignup(true)} />
+        )}
       </div>
     </div>
   );
