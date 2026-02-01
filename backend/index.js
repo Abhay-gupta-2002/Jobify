@@ -1,4 +1,5 @@
 require("dotenv").config();
+const PORT = process.env.PORT || 5000;
 
 const connectDB = require("./config/db");
 connectDB();
@@ -54,6 +55,6 @@ app.get("/", (req, res) => {
   res.send("backend running");
 });
 
-app.listen(5000, () => {
+app.listen(PORT, () => {
   console.log("server running on port 5000");
 });
