@@ -1,10 +1,14 @@
 import axios from "axios";
 
+const fallbackApiBaseUrl = "http://localhost:5000";
+const configuredBaseUrl =
+  import.meta.env.VITE_API_BASE_URL?.trim() || fallbackApiBaseUrl;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: configuredBaseUrl.replace(/\/+$/, ""),
 });
 
-// 🔑 ALWAYS attach token
+// Always attach the auth token when present.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");

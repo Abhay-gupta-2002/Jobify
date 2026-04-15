@@ -1,38 +1,51 @@
-const User = require("../models/User");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
+const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
+
+const getFrontendBaseUrl = () => {
+  const configuredUrl = process.env.FRONTEND_URL?.split(",")[0]?.trim();
+  return (configuredUrl || "http://localhost:5173").replace(/\/+$/, "");
+};
+
 exports.signup = async (req, res) => {
   try {
-    console.log("SIGNUP BODY:", req.body);
-
     const { name, email, password } = req.body;
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
     res.json({ success: true, user });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
-   const isMatch = await bcrypt.compare(password, user.password);
-if (!isMatch) {
-  return res.status(400).json({ message: "Invalid credentials" });
-}
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "21d",
     });
+
     res.json({
       success: true,
       token,
@@ -43,29 +56,26 @@ if (!isMatch) {
       },
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({ error: err.message });
   }
 };
-const crypto = require("crypto");
-const sendEmail = require("../utils/sendEmail");
 
-/* ===== FORGOT PASSWORD ===== */
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
 
     const token = crypto.randomBytes(32).toString("hex");
 
     user.resetPasswordToken = token;
-    user.resetPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 min
+    user.resetPasswordExpiry = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    const resetLink = `http://localhost:5173/reset-password/${token}`;
+    const resetLink = `${getFrontendBaseUrl()}/reset-password/${token}`;
 
     await sendEmail(
       email,
@@ -84,7 +94,6 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-/* ===== RESET PASSWORD ===== */
 exports.resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
@@ -95,8 +104,9 @@ exports.resetPassword = async (req, res) => {
       resetPasswordExpiry: { $gt: Date.now() },
     });
 
-    if (!user)
+    if (!user) {
       return res.status(400).json({ message: "Invalid or expired token" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
