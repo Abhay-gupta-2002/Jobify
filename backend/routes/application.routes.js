@@ -1,13 +1,10 @@
 const express = require("express");
-const router = express.Router();
-const nodemailer = require("nodemailer");
-const path = require("path");
-const fs = require("fs");
-const os = require("os");
-const axios = require("axios");
 
 const authMiddleware = require("../middleware/auth.middleware");
 const User = require("../models/User");
+const { fetchAttachmentFromUrl, sendGmailMessage } = require("../services/gmail.service");
+
+const router = express.Router();
 
 router.post("/apply", authMiddleware, async (req, res) => {
   try {
@@ -22,70 +19,44 @@ router.post("/apply", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (!user.email || !user.emailKey) {
+    if (!user.gmailConnected || !user.gmailRefreshToken || !user.gmailEmail) {
       return res.status(400).json({
-        message: "User email or app password not set",
+        message: "Connect your Gmail account before sending applications",
       });
     }
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: user.email,
-        pass: user.emailKey,
-      },
-    });
 
     const attachments = [];
-    let tempPath = null;
-
-    // 🔥 FIXED RESUME ATTACH
     if (user.resume) {
-      tempPath = path.join(os.tmpdir(), "resume.pdf");
-
-      const response = await axios({
-        url: user.resume,
-        method: "GET",
-        responseType: "stream",
-      });
-
-      const writer = fs.createWriteStream(tempPath);
-      response.data.pipe(writer);
-
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
-      });
-
-      attachments.push({
-        filename: "resume.pdf",
-        path: tempPath,
-      });
+      attachments.push(await fetchAttachmentFromUrl(user.resume, "resume.pdf"));
     }
 
-    await transporter.sendMail({
-      from: user.email,
+    await sendGmailMessage({
+      refreshToken: user.gmailRefreshToken,
+      from: user.gmailEmail,
       to: toEmail,
       subject: `Application for ${company}`,
       text: emailText,
       attachments,
     });
 
-    if (tempPath) fs.unlinkSync(tempPath);
-
     user.applications.push({
       company,
       toEmail,
       emailText,
       status: "sent",
+      senderEmail: user.gmailEmail,
     });
 
     await user.save();
 
-    res.json({ success: true, message: "Email sent successfully" });
+    res.json({
+      success: true,
+      message: "Application sent successfully",
+      senderEmail: user.gmailEmail,
+    });
   } catch (err) {
     console.error("SEND MAIL ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message || "Failed to send application" });
   }
 });
 

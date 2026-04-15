@@ -1,20 +1,25 @@
-const nodemailer = require("nodemailer");
+const axios = require("axios");
 
 const sendEmail = async (to, subject, html) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, 
-    },
-  });
+  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
+    throw new Error("Resend email delivery is not configured");
+  }
 
-  await transporter.sendMail({
-    from: `"Jobify Support" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  await axios.post(
+    "https://api.resend.com/emails",
+    {
+      from: process.env.EMAIL_FROM,
+      to: [to],
+      subject,
+      html,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };
 
 module.exports = sendEmail;

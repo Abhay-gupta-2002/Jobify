@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api/axios";
 
 function Apply() {
@@ -6,18 +7,19 @@ function Apply() {
   const [toEmail, setToEmail] = useState("");
   const [jobText, setJobText] = useState("");
   const [emailText, setEmailText] = useState("");
-  const [userName, setUserName] = useState("");
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    const fetchUserName = async () => {
+    const fetchProfile = async () => {
       try {
         const res = await api.get("/api/user/profile");
-        setUserName(res.data.user.name);
+        setProfile(res.data.user);
       } catch {}
     };
-    fetchUserName();
+
+    fetchProfile();
   }, []);
 
   const handleGenerate = async () => {
@@ -25,10 +27,12 @@ function Apply() {
       alert("Enter company name and job description");
       return;
     }
+
     setGenerating(true);
     try {
       const res = await api.post("/generate-email", { jobText, company });
-      setEmailText(res.data.emailText + "\n" + userName);
+      const signature = profile?.name ? `\n\n${profile.name}` : "";
+      setEmailText(`${res.data.emailText}${signature}`);
     } catch {
       alert("Failed to generate email");
     } finally {
@@ -41,34 +45,62 @@ function Apply() {
       alert("Fill all fields");
       return;
     }
+
+    if (!profile?.gmailConnected) {
+      alert("Connect Gmail in your profile before sending applications");
+      return;
+    }
+
     setLoading(true);
     try {
-      await api.post("/api/application/apply", {
+      const res = await api.post("/api/application/apply", {
         company,
         toEmail,
         emailText,
       });
-      alert("Application sent successfully");
+
+      alert(`Application sent from ${res.data.senderEmail}`);
       setCompany("");
       setToEmail("");
       setJobText("");
       setEmailText("");
-    } catch {
-      alert("Failed to send application");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to send application");
     } finally {
       setLoading(false);
     }
   };
 
+  const gmailReady = Boolean(profile?.gmailConnected);
+
   return (
-    <div className="max-w-5xl mx-auto pt-10">
-      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 shadow-xl">
-        <h1 className="text-3xl font-semibold tracking-tight text-white mb-1">
+    <div className="mx-auto max-w-5xl pt-10">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl">
+        <h1 className="mb-1 text-3xl font-semibold tracking-tight text-white">
           Apply for a Job
         </h1>
-        <p className="text-sm text-slate-400 mb-8">
-          Generate and send professional job emails
+        <p className="mb-8 text-sm text-slate-400">
+          Generate and send professional cold emails from your connected Gmail account.
         </p>
+
+        <div className="mb-8 rounded-2xl border border-white/10 bg-black/20 p-5">
+          <p className="text-sm text-slate-300">
+            Gmail status:{" "}
+            <span className={gmailReady ? "text-emerald-300" : "text-amber-300"}>
+              {gmailReady ? `Connected as ${profile.gmailEmail}` : "Not connected"}
+            </span>
+          </p>
+
+          {!gmailReady ? (
+            <p className="mt-2 text-sm text-slate-400">
+              Connect Gmail first from your{" "}
+              <Link to="/profile" className="text-blue-400 underline">
+                profile page
+              </Link>{" "}
+              so the Send button can deliver emails directly.
+            </p>
+          ) : null}
+        </div>
 
         <div className="space-y-5">
           <input
@@ -76,8 +108,7 @@ function Apply() {
             placeholder="Company Name"
             value={company}
             onChange={(e) => setCompany(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3
-            text-white placeholder-slate-400 focus:ring-2 focus:ring-white/20 outline-none"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-white/20"
           />
 
           <input
@@ -85,18 +116,16 @@ function Apply() {
             placeholder="Recruiter Email"
             value={toEmail}
             onChange={(e) => setToEmail(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3
-            text-white placeholder-slate-400 focus:ring-2 focus:ring-white/20 outline-none"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-white/20"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <textarea
               rows="10"
               placeholder="Paste job description..."
               value={jobText}
               onChange={(e) => setJobText(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/5 p-4
-              text-white placeholder-slate-400 resize-none focus:ring-2 focus:ring-white/20 outline-none"
+              className="resize-none rounded-xl border border-white/10 bg-white/5 p-4 text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-white/20"
             />
 
             <textarea
@@ -104,29 +133,26 @@ function Apply() {
               placeholder="Generated email..."
               value={emailText}
               onChange={(e) => setEmailText(e.target.value)}
-              className="rounded-xl border border-white/10 bg-black/40 p-4
-              text-white placeholder-slate-400 resize-none outline-none"
+              className="resize-none rounded-xl border border-white/10 bg-black/40 p-4 text-white placeholder-slate-400 outline-none"
             />
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between mt-8">
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-between">
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-6 py-3 rounded-xl border border-white/10
-            hover:bg-white/10 transition disabled:opacity-60"
+            className="rounded-xl border border-white/10 px-6 py-3 transition hover:bg-white/10 disabled:opacity-60"
           >
             {generating ? "Generating..." : "Generate Email"}
           </button>
 
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className="bg-white text-black px-6 py-3 rounded-xl
-            hover:bg-slate-200 transition disabled:opacity-60"
+            disabled={loading || !gmailReady}
+            className="rounded-xl bg-white px-6 py-3 text-black transition hover:bg-slate-200 disabled:opacity-60"
           >
-            {loading ? "Sending..." : "Send Application"}
+            {loading ? "Sending..." : gmailReady ? "Send Application" : "Connect Gmail First"}
           </button>
         </div>
       </div>
