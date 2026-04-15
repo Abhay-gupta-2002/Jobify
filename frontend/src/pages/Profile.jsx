@@ -161,11 +161,17 @@ function Profile() {
           Email Credentials
         </h3>
 
+        <p className="text-sm text-slate-400 mb-4">
+          Application emails are sent using your registered email and your Gmail
+          app password saved below.
+        </p>
+
         <div className="flex gap-4">
           <input
             type="password"
             value={emailKey}
             onChange={(e) => setEmailKey(e.target.value)}
+            placeholder="Enter your Gmail app password"
             className="flex-1 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white"
           />
           <button
